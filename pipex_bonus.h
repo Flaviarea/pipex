@@ -7,13 +7,11 @@
 # include <sys/wait.h>
 # include <stdio.h>
 #include "libft/libft.h"
+#include "pipex_mandatory.h"
 
-void	error_exit(char *msg);
-char	*get_cmd_path(char *cmd, char **envp);
-void	execute(char *cmd, char **envp);
-void	pipex(int argc, char **argv, char **envp);
-void	child_process(char *cmd, int in, int out, char **env);
-
+void	pipex_bonus(int argc, char **argv, char **envp);
+void	handle_here_doc(char *limiter, int *fd);
+char	*read_line(void);
 
 #endif
 

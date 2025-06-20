@@ -1,15 +1,48 @@
-#include "pipex_bonus.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pipex_bonus.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: frea <frea@student.42berlin.de>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/06/17 13:13:32 by frea              #+#    #+#             */
+/*   Updated: 2025/06/17 13:13:35 by frea             ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-void	child_process(char *cmd, int in, int out, char **env)
+#include "pipex_bonus.h"
+#include "pipex_mandatory.h"
+
+void	handle_here_doc(char *limiter, int *fd)
 {
-	if (dup2(in, 0) < 0 || dup2(out, 1) < 0)
-		error_exit("dup2");
-	execute(cmd, env);
+	char	*line;
+	int		tmp[2];
+
+	if (pipe(tmp) == -1)
+		error_exit("pipe");
+	while (1)
+	{
+		write(1, "heredoc> ", 9);
+		line = read_line();
+		if (!line || !ft_strncmp(line, limiter, ft_strlen(limiter)))
+		{
+			free(line);
+			break;
+		}
+		write(tmp[1], line, ft_strlen(line));
+		free(line);
+	}
+	close(tmp[1]);
+	fd[0] = tmp[0];
 }
 
-void	pipex(int argc, char **argv, char **env)
+void	pipex_bonus(int argc, char **argv, char **env)
 {
-	int		i, pipefd[2], pid, fd, prev;
+	int		i;
+	int		pipefd[2];
+	int		pid;
+	int		fd;
+	int		prev;
 
 	prev = open(argv[1], O_RDONLY);
 	if (prev < 0)
@@ -36,4 +69,36 @@ void	pipex(int argc, char **argv, char **env)
 	close(prev);
 	close(fd);
 	wait(0);
+}
+
+char	*read_line(void)
+{
+	char	*line;
+	char	*tmp;
+	char	buf;
+	int		i;
+
+	line = malloc(1);
+	if (!line)
+		return (NULL);
+	line[0] = '\0';
+	i = 0;
+	while (read(0, &buf, 1) > 0)
+	{
+		tmp = malloc(i + 2);
+		if (!tmp)
+			return (free(line), NULL);
+		for (int j = 0; j < i; j++)
+			tmp[j] = line[j];
+		tmp[i] = buf;
+		tmp[i + 1] = '\0';
+		free(line);
+		line = tmp;
+		if (buf == '\n')
+			break ;
+		i++;
+	}
+	if (i == 0 && buf != '\n')
+		return (free(line), NULL);
+	return (line);
 }
