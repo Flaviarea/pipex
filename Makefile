@@ -10,7 +10,8 @@ MANDATORY_SRCS = pipex_mandatory.c \
 	main_mandatory.c \
 
 BONUS_SRCS = pipex_bonus.c \
-	main_bonus.c
+	main_bonus.c \
+	utils.c
 
 MANDATORY_OBJS = $(MANDATORY_SRCS:.c=.o)
 BONUS_OBJS = $(BONUS_SRCS:.c=.o)
@@ -23,11 +24,11 @@ $(LIBFT):
 $(NAME): $(MANDATORY_OBJS)
 	@cc $(CFLAGS) -o $(NAME) $(MANDATORY_OBJS) $(LIBFT)
 
-bonus: $(BONUS_OBJS)
+bonus: $(LIBFT) $(BONUS_OBJS)
 	@cc $(CFLAGS) -o $(BONUS) $(BONUS_OBJS) $(LIBFT)
 
 %.o: %.c
-	@cc $(CFLAGS) -I . -c $< -o $@
+	cc $(CFLAGS) -I . -I $(LIBFT_DIR) -c $< -o $@
 
 clean:
 	@rm -f $(MANDATORY_OBJS) $(BONUS_OBJS)

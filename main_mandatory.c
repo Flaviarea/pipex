@@ -16,7 +16,8 @@
     mandatory:
     gestisce due comandi fissi
     
-    */
+*/
+
 int	main(int argc, char **argv, char **envp)
 {
 	if (argc != 5)

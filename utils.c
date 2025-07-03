@@ -62,7 +62,9 @@ void	error_exit(char *msg)
 
 void	free_split(char **arr)
 {
-	int	i = 0;
+	int	i;
+	
+	i = 0;
 	while (arr && arr[i])
 		free(arr[i++]);
 	free(arr);

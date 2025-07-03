@@ -6,8 +6,8 @@
 # include <stdlib.h>
 # include <sys/wait.h>
 # include <stdio.h>
-#include "libft/libft.h"
-#include "pipex_mandatory.h"
+# include "libft/libft.h"
+# include "pipex_mandatory.h"
 
 void	pipex_bonus(int argc, char **argv, char **envp);
 void	handle_here_doc(char *limiter, int *fd);
