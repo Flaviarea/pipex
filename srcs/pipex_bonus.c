@@ -11,7 +11,15 @@
 /* ************************************************************************** */
 
 #include "pipex_bonus.h"
-#include "pipex_mandatory.h"
+
+/*
+	handle_here_doc:
+	Handles the here_doc feature: reads from stdin to the delimiter.
+	Each line is written to a temporary pipe.
+	When it finds the delimiter, it closes the write and returns the read fd.
+	Used to simulate terminal input in commands with here_doc.
+	Debug: prints each line read and when it finds the delimiter.
+*/
 
 void	handle_here_doc(char *limiter, int *fd)
 {
@@ -23,9 +31,13 @@ void	handle_here_doc(char *limiter, int *fd)
 	while (1)
 	{
 		write(1, "heredoc> ", 9);
-		line = read_line();
-		if (!line || !ft_strncmp(line, limiter, ft_strlen(limiter)))
+		line = get_next_line(STDIN_FILENO);
+		write(2, "DEBUG: heredoc read line: ", 26);
+		if (line)
+			write(2, line, ft_strlen(line));
+		if (!line || (!ft_strncmp(line, limiter, ft_strlen(limiter)) && line[ft_strlen(limiter)] == '\n'))
 		{
+			write(2, "DEBUG: heredoc delimiter found\n", 30);
 			free(line);
 			break;
 		}
@@ -36,71 +48,106 @@ void	handle_here_doc(char *limiter, int *fd)
 	fd[0] = tmp[0];
 }
 
+/*
+	pipex_bonus:
+	Handles N commands sequentially via pipe (not just 2 like the mandatory).
+	Opens the input file and creates a chain of processes connected by pipes.
+	Each intermediate command is executed in a child, with input/output redirected.
+	The last command writes to the output file.
+	Debug: prints which command is executed and the descriptor files involved.
+*/
+
 void	pipex_bonus(int argc, char **argv, char **env)
 {
 	int		i;
 	int		pipefd[2];
 	int		pid;
-	int		fd;
 	int		prev;
+	int		last_pid;
+	int		status;
+	int		is_heredoc = 0;
+	int status;
 
-	prev = open(argv[1], O_RDONLY);
-	if (prev < 0)
-		error_exit("infile");
-	i = 2;
+	// Gestione here_doc
+	if (argc > 1 && ft_strncmp(argv[1], "here_doc", 9) == 0)
+	{
+		is_heredoc = 1;
+		int herefd[2];
+		handle_here_doc(argv[2], herefd);
+		prev = herefd[0];
+		i = 3;
+	}
+	else
+	{
+		prev = open(argv[1], O_RDONLY);
+		if (prev < 0)
+			prev = open("/dev/null", O_RDONLY);
+		i = 2;
+	}
 	while (i < argc - 2)
 	{
 		if (pipe(pipefd) < 0)
 			error_exit("pipe");
 		pid = fork();
 		if (pid == 0)
-			child_process(argv[i], prev, pipefd[1], env);
+		{
+			dup2(prev, STDIN_FILENO);
+			dup2(pipefd[1], STDOUT_FILENO);
+			close(prev);
+			close(pipefd[0]);
+			close(pipefd[1]);
+			execute(argv[i], env);
+			exit(127);
+		}
 		close(pipefd[1]);
 		close(prev);
-		waitpid(pid, NULL, 0);
+		// NON chiamare waitpid qui!
 		prev = pipefd[0];
 		i++;
 	}
-	fd = open(argv[argc - 1], O_CREAT | O_WRONLY | O_TRUNC, 0644);
-	if (fd < 0)
-		error_exit("outfile");
-	if (fork() == 0)
-		child_process(argv[argc - 2], prev, fd, env);
-	close(prev);
-	close(fd);
-	wait(0);
-}
-
-/*
-char	*read_line(void)
-{
-	char	*line;
-	char	*tmp;
-	char	buf;
-	int		i;
-
-	line = malloc(1);
-	if (!line)
-		return (NULL);
-	line[0] = '\0';
-	i = 0;
-	while (read(0, &buf, 1) > 0)
+	// L'ultimo comando: il figlio apre il file di output
+	last_pid = fork();
+	if (last_pid == 0)
 	{
-		tmp = malloc(i + 2);
-		if (!tmp)
-			return (free(line), NULL);
-		for (int j = 0; j < i; j++)
-			tmp[j] = line[j];
-		tmp[i] = buf;
-		tmp[i + 1] = '\0';
-		free(line);
-		line = tmp;
-		if (buf == '\n')
-			break ;
-		i++;
+		int fd;
+		if (is_heredoc)
+			fd = open(argv[argc - 1], O_CREAT | O_WRONLY | O_APPEND, 0644);
+		else
+			fd = open(argv[argc - 1], O_CREAT | O_WRONLY | O_TRUNC, 0644);
+		if (fd < 0)
+		{
+			perror(argv[argc - 1]);
+			exit(1);
+		}
+		if (dup2(prev, STDIN_FILENO) < 0)
+		{
+			perror("dup2 prev");
+			close(fd);
+			exit(1);
+		}
+		if (dup2(fd, STDOUT_FILENO) < 0)
+		{
+			perror("dup2 fd");
+			close(fd);
+			exit(1);
+		}
+		close(prev);
+		close(fd);
+		execute(argv[argc - 2], env);
+		exit(127); // Se execute fallisce
 	}
-	if (i == 0 && buf != '\n')
-		return (free(line), NULL);
-	return (line);
+	close(prev);
+	int wstatus;
+	status = -1;
+	pid_t wpid;
+	while ((wpid = waitpid(-1, &wstatus, 0)) > 0)
+	{
+		if (wpid == last_pid)
+			status = wstatus;
+	}
+	if (status != -1 && WIFEXITED(status))
+		exit(WEXITSTATUS(status));
+	else if (status != -1 && WIFSIGNALED(status))
+		exit(128 + WTERMSIG(status));
+	exit(1);
 }
-*/

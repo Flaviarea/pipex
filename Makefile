@@ -7,12 +7,12 @@ LIBFT_DIR = ./libft
 LIBFT = $(LIBFT_DIR)/libft.a
 
 MANDATORY_SRCS = $(SRC_DIR)/pipex_mandatory.c \
-	$(SRC_DIR)/utils.c \
+	$(SRC_DIR)/shared_utils.c \
 	$(SRC_DIR)/main_mandatory.c
 
 BONUS_SRCS = $(SRC_DIR)/pipex_bonus.c \
 	$(SRC_DIR)/main_bonus.c \
-	$(SRC_DIR)/utils.c
+	$(SRC_DIR)/shared_utils.c
 
 MANDATORY_OBJS = $(MANDATORY_SRCS:.c=.o)
 BONUS_OBJS = $(BONUS_SRCS:.c=.o)

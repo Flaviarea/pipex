@@ -11,8 +11,6 @@
 
 void	pipex_bonus(int argc, char **argv, char **envp);
 void	handle_here_doc(char *limiter, int *fd);
-//char	*read_line(void);
-char	*get_next_line(int fd);
 
 #endif
 
