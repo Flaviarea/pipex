@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex_bonus.h"
+//#include "pipex_bonus.h"
 #include "pipex_mandatory.h"
 
 char	*get_cmd_path(char *cmd, char **envp)

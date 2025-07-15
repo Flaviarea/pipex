@@ -7,19 +7,6 @@
     Eseguire il comando con execve
 */
 
-void execute(char *cmd, char **envp)
-{
-    char **args;
-    char *path;
-
-    args = ft_split(cmd, ' ');
-    path = get_cmd_path(args[0], envp);
-    if(!path)
-        error_exit("cmd");
-    execve(path, args, envp);
-    error_exit("execve");
-}
-
 
 void	error_exit(char *msg)
 {
@@ -27,6 +14,7 @@ void	error_exit(char *msg)
 	exit(1);
 }
 
+/*
 char	*read_line(void)
 {
 	char	*line;
@@ -58,6 +46,7 @@ char	*read_line(void)
 		return (free(line), NULL);
 	return (line);
 }
+	*/
 
 void	handle_here_doc(char *limiter, int *fd)
 {
@@ -69,7 +58,7 @@ void	handle_here_doc(char *limiter, int *fd)
 	while (1)
 	{
 		write(1, "heredoc> ", 9);
-		line = read_line();
+		line = get_next_line(fd);
 		if (!line || !ft_strncmp(line, limiter, ft_strlen(limiter)))
 		{
 			free(line);

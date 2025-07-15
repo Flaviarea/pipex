@@ -71,6 +71,7 @@ void	pipex_bonus(int argc, char **argv, char **env)
 	wait(0);
 }
 
+/*
 char	*read_line(void)
 {
 	char	*line;
@@ -102,3 +103,4 @@ char	*read_line(void)
 		return (free(line), NULL);
 	return (line);
 }
+*/
