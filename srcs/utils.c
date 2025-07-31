@@ -99,13 +99,14 @@ void	execute(char *cmd, char **envp)
 	path = get_cmd_path(args[0], envp);
 	if (!path)
 	{
+		write(2, "bash: ", 6);
 		write(2, args[0], ft_strlen(args[0]));
 		write(2, ": command not found\n", 21);
 		free_split(args);
 		exit(127);
 	}
 	execve(path, args, envp);
-	write(2, "execve failed\n", 15);
+	perror(args[0]);
 	free(path);
 	free_split(args);
 	exit(1);
