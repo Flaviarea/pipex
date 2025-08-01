@@ -10,7 +10,8 @@ REMOVE = rm -rf
 
 SRCS = $(SRC_DIR)/pipex.c \
 	$(SRC_DIR)/utils.c \
-	$(SRC_DIR)/main.c
+	$(SRC_DIR)/main.c \
+	$(SRC_DIR)/frees_n_errors.c
 
 OBJS = $(SRCS:.c=.o)
 

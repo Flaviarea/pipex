@@ -49,9 +49,9 @@ int	main(int argc, char **argv, char **envp)
 	waitpid(pid1, &status1, 0);
 	waitpid(pid2, &status2, 0);
 	if (WIFEXITED(status2))
-		exit(WEXITSTATUS(status2));
-	if (WIFEXITED(status1))
-		exit(WEXITSTATUS(status1));
-	exit(1);
+		return (WEXITSTATUS(status2));
+	else if (WIFSIGNALED(status2))
+		return (128 + WTERMSIG(status2));
+	else
+		return (1);
 }
-

@@ -12,15 +12,10 @@
 
 #include "pipex.h"
 
-char	*get_cmd_path(char *cmd, char **envp)
+static char	**get_paths_from_env(char **envp)
 {
-	char	**paths;
-	char	*path;
-	char	*tmp;
-	int		i;
+	int	i;
 
-	if (ft_strchr(cmd, '/')) 
-		return (ft_strdup(cmd));
 	i = 0;
 	while (envp[i] && ft_strncmp(envp[i], "PATH=", 5))
 		i++;
@@ -29,60 +24,62 @@ char	*get_cmd_path(char *cmd, char **envp)
 		write(2, "PATH not found in env\n", 23);
 		return (NULL);
 	}
-	paths = ft_split(envp[i] + 5, ':');
+	return (ft_split(envp[i] + 5, ':'));
+}
+
+static char	*join_path_and_check(char *dir, char *cmd)
+{
+	char	*tmp;
+	char	*full;
+
+	tmp = ft_strjoin(dir, "/");
+	full = ft_strjoin(tmp, cmd);
+	free(tmp);
+	if (!access(full, X_OK))
+		return (full);
+	free(full);
+	return (NULL);
+}
+
+char	*get_cmd_path(char *cmd, char **envp)
+{
+	char	**paths;
+	char	*path;
+	int		i;
+
 	i = -1;
+	if (ft_strchr(cmd, '/'))
+		return (ft_strdup(cmd));
+	paths = get_paths_from_env(envp);
+	if (!paths)
+		return (NULL);
 	while (paths[++i])
 	{
-		tmp = ft_strjoin(paths[i], "/");
-		path = ft_strjoin(tmp, cmd);
-		free(tmp);
-		if (!access(path, X_OK))
+		path = join_path_and_check(paths[i], cmd);
+		if (path)
 		{
 			free_split(paths);
 			return (path);
 		}
-		free(path);
 	}
 	free_split(paths);
 	return (NULL);
 }
 
-void child_process(char *cmd, int in, int out, char **env)
+void	child_process(char *cmd, int in, int out, char **env)
 {
-    if (dup2(in, STDIN_FILENO) < 0 || dup2(out, STDOUT_FILENO) < 0)
-        error_exit("child_process: dup2");
-    close(in);
-    close(out);
-    execute(cmd, env);
+	if (in < 0)
+    {
+        close(out);
+        execute(cmd, env);
+        return;
+    }
+	if (dup2(in, STDIN_FILENO) < 0 || dup2(out, STDOUT_FILENO) < 0)
+		error_exit("child_process: dup2");
+	close(in);
+	close(out);
+	execute(cmd, env);
 }
-
-void	error_exit(char *msg)
-{
-	perror(msg);
-	exit(1);
-}
-
-
-void	free_split(char **arr)
-{
-	int	i;
-	
-	i = 0;
-	while (arr && arr[i])
-		free(arr[i++]);
-	free(arr);
-}
-
-/*
-    execute: parsing the string:
-    The function will split the command into arguments, find the executable path,
-	and then execute it using execve.
-	args[0] is the command to execute, args[1] is the first argument, etc.
-	envp is the environment variables passed to execve.
-	if the programm has successfully executed, it will not return.
-	If execve fails, it will write an error message and exit with status 1.
-	It is assumed that the command is a valid executable file.
-*/
 
 void	execute(char *cmd, char **envp)
 {
